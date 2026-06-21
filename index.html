@@ -481,8 +481,63 @@ nav.scrolled{background:rgba(10,22,40,.7);backdrop-filter:blur(18px);-webkit-bac
   .svc-price{font-size:3.2rem;}
 }
 </style>
+<style>
+/* ════════════════════════════════════════════════════════════════
+   CINEMATIC SCROLL LAYER — parallax storytelling, aurora depth,
+   progress, chapter markers. Visual only; all guarded for a11y.
+   Pattern: "Parallax Storytelling" + "Trust & Authority" (dark).
+   ════════════════════════════════════════════════════════════════ */
+
+/* Scroll progress bar */
+.scroll-progress{position:fixed;top:0;left:0;height:3px;width:100%;transform:scaleX(0);transform-origin:0 50%;background:linear-gradient(90deg,var(--teal),var(--teal-bright));z-index:10000;box-shadow:0 0 18px rgba(63,217,160,.6);will-change:transform;pointer-events:none;}
+
+/* Animated aurora backdrop (cinematic depth) */
+.aurora{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;pointer-events:none;mix-blend-mode:screen;will-change:transform;}
+.aurora-1{width:62vw;height:62vw;top:-22%;left:-12%;background:radial-gradient(circle,rgba(29,158,117,.45),transparent 65%);animation:auroraA 19s ease-in-out infinite;}
+.aurora-2{width:52vw;height:52vw;bottom:-28%;right:-12%;background:radial-gradient(circle,rgba(63,217,160,.30),transparent 65%);animation:auroraB 23s ease-in-out infinite;}
+.aurora-3{width:42vw;height:42vw;top:28%;left:38%;background:radial-gradient(circle,rgba(13,110,86,.40),transparent 65%);animation:auroraC 27s ease-in-out infinite;}
+@keyframes auroraA{0%,100%{transform:translate3d(0,0,0) scale(1);}50%{transform:translate3d(8%,6%,0) scale(1.15);}}
+@keyframes auroraB{0%,100%{transform:translate3d(0,0,0) scale(1.1);}50%{transform:translate3d(-10%,-8%,0) scale(.9);}}
+@keyframes auroraC{0%,100%{transform:translate3d(0,0,0) scale(1);}50%{transform:translate3d(-6%,10%,0) scale(1.2);}}
+.hero-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 38%,transparent 42%,rgba(7,16,30,.6) 100%);pointer-events:none;}
+
+/* Hero elements prepped for GPU transforms */
+.hero h1,.hero-tagline,.hero-sub,.hero-pill,.hero-ctas,.hero-trust,.scroll-ind{will-change:transform,opacity;}
+
+/* Cinematic chapter numbers on section eyebrows */
+body{counter-reset:chapter;}
+.section .center .section-tag{counter-increment:chapter;display:inline-flex;align-items:center;gap:13px;}
+.section .center .section-tag::before{content:'0' counter(chapter);font-family:var(--serif);font-style:italic;font-size:1.5em;line-height:1;color:rgba(63,217,160,.35);letter-spacing:0;text-transform:none;}
+
+/* Button shine sweep */
+.btn-teal,.nav-book,.float-book{position:relative;overflow:hidden;}
+.btn-teal::after,.nav-book::after,.float-book::after{content:'';position:absolute;top:0;left:-130%;width:55%;height:100%;background:linear-gradient(120deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);pointer-events:none;}
+.btn-teal:hover::after,.nav-book:hover::after,.float-book:hover::after{animation:shine .9s ease;}
+@keyframes shine{from{left:-130%;}to{left:150%;}}
+
+/* How-it-works cinematic connector (built by JS on desktop) */
+.how-steps{position:relative;}
+.how-connector{position:absolute;top:41px;left:17%;right:17%;height:2px;background:rgba(255,255,255,.09);overflow:hidden;z-index:0;border-radius:2px;}
+.how-connector-fill{position:absolute;inset:0;width:0;background:linear-gradient(90deg,var(--teal),var(--teal-bright));box-shadow:0 0 14px rgba(63,217,160,.7);border-radius:2px;}
+.how-step{position:relative;z-index:1;}
+
+/* Carousel frame depth */
+#gWrap{will-change:transform;}
+
+@media(max-width:960px){ .how-connector{display:none;} }
+
+/* ── REDUCED MOTION: disable the cinema, keep all content visible ── */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}
+  .aurora{animation:none!important;opacity:.4;}
+  .marquee-track{animation:none!important;}
+  .scroll-progress{display:none!important;}
+  .hero-pill-dot,.float-book-dot{animation:none!important;}
+}
+</style>
 </head>
 <body>
+<div class="scroll-progress" aria-hidden="true"></div>
 
 <!-- FLOATING BUTTONS -->
 <a href="https://app.squareup.com/appointments/book/32mcwgnkynduia/LV3PZACYGQBEM/start" class="float-book">
@@ -530,9 +585,13 @@ nav.scrolled{background:rgba(10,22,40,.7);backdrop-filter:blur(18px);-webkit-bac
 <!-- HERO -->
 <section class="hero">
   <div class="hero-bg">
+    <div class="aurora aurora-1"></div>
+    <div class="aurora aurora-2"></div>
+    <div class="aurora aurora-3"></div>
     <div class="hero-grid"></div>
     <div class="hero-glow1"></div>
     <div class="hero-glow2"></div>
+    <div class="hero-vignette"></div>
   </div>
   <div class="hero-content">
     <div class="hero-pill">
@@ -1346,81 +1405,133 @@ document.addEventListener('click', function(e){
 });
 </script>
 <script>
-/* ── CINEMATIC SCROLL LAYER (GSAP + ScrollTrigger) ──
-   Purely visual. Guarded so the page degrades gracefully if the
-   GSAP CDN is unavailable (all content stays fully visible). */
+/* ════ CINEMATIC SCROLL LAYER (GSAP + ScrollTrigger) ════
+   Parallax storytelling: pinned hero exit, layered depth, chapter
+   reveals, connector draw, gallery scrub, scroll progress.
+   Fully guarded: if GSAP is missing OR the user prefers reduced
+   motion, NOTHING is hidden — all content renders normally. */
 (function(){
   if(!window.gsap || !window.ScrollTrigger){ return; }
   gsap.registerPlugin(ScrollTrigger);
   ScrollTrigger.config({ limitCallbacks:true });
 
-  var isMobile = window.innerWidth < 768;
-  var pf = isMobile ? 0.5 : 1; // parallax / distance factor
+  var mm = gsap.matchMedia();
 
-  // 1. HERO — zoom + fade on scroll
-  if(document.querySelector('.hero-content')){
-    gsap.to('.hero-content',{
-      scrollTrigger:{ trigger:'.hero', start:'top top', end:'bottom top', scrub:true },
-      scale:1.5, opacity:0, y:-60, ease:'none'
-    });
-    gsap.to('.hero-bg',{
-      scrollTrigger:{ trigger:'.hero', start:'top top', end:'bottom top', scrub:true },
-      scale:1.2, ease:'none'
-    });
-  }
+  /* Full cinematic experience — ONLY when motion is welcome */
+  mm.add('(prefers-reduced-motion: no-preference)', function(){
+    var isMobile = window.matchMedia('(max-width:767px)').matches;
+    var pf = isMobile ? 0.5 : 1; // parallax distance factor
 
-  // 2. SECTION REVEALS — fade up on enter
-  var revealSel = [
-    '.center', '.about-visual', '.about-feat', '.water-callout',
-    '#service-area .container > div:last-child',
-    '.book-step', '.how-step', '.how-note',
-    '#reviewSummary', '#reviewCards', '#reviews .container > div:last-child',
-    '.trust-item', '.why-card', '.faq-item'
-  ];
-  revealSel.forEach(function(sel){
-    gsap.utils.toArray(sel).forEach(function(el){
-      gsap.fromTo(el,
-        { opacity:0, y:60*pf },
-        { opacity:1, y:0, duration:1, ease:'power3.out', clearProps:'transform',
-          scrollTrigger:{ trigger:el, start:'top 85%' } }
-      );
-    });
-  });
+    /* Scroll progress bar */
+    var bar = document.querySelector('.scroll-progress');
+    if(bar){
+      gsap.to(bar,{ scaleX:1, ease:'none',
+        scrollTrigger:{ start:0, end:'max', scrub:0.3 } });
+    }
 
-  // 3. BEFORE/AFTER CAROUSEL — subtle parallax drift
-  if(document.getElementById('gallery')){
-    gsap.to('#gallery .container',{
-      scrollTrigger:{ trigger:'#gallery', start:'top bottom', end:'bottom top', scrub:true },
-      y:-40*pf, ease:'none'
-    });
-  }
+    /* HERO — elegant load-in timeline */
+    if(document.querySelector('.hero-content')){
+      gsap.timeline({ defaults:{ ease:'power3.out' } })
+        .from('.hero-pill',    { y:24, opacity:0, duration:.7 })
+        .from('.hero h1',      { y:44, opacity:0, duration:1.0 }, '-=.40')
+        .from('.hero-tagline', { y:22, opacity:0, duration:.7 }, '-=.60')
+        .from('.hero-sub',     { y:22, opacity:0, duration:.7 }, '-=.50')
+        .from('.hero-ctas',    { y:22, opacity:0, duration:.7 }, '-=.50')
+        .from('.hero-trust',   { y:18, opacity:0, duration:.7 }, '-=.50')
+        .from('.scroll-ind',   { opacity:0, duration:.8 }, '-=.30');
+    }
 
-  // 4. PRICING CARDS — stagger reveal
-  if(document.querySelector('.services-grid')){
-    gsap.fromTo('.svc-card',
-      { opacity:0, y:50 },
-      { opacity:1, y:0, duration:0.8, stagger:0.15, ease:'power3.out', clearProps:'transform',
-        scrollTrigger:{ trigger:'.services-grid', start:'top 80%' } }
-    );
-  }
+    /* HERO — pinned cinematic exit (zoom + fade + layered parallax) */
+    if(document.querySelector('.hero')){
+      gsap.timeline({ scrollTrigger:{
+          trigger:'.hero', start:'top top', end:'+=110%',
+          scrub:true, pin:!isMobile, pinSpacing:!isMobile, anticipatePin:1 } })
+        .to('.hero-content', { scale:1.45, opacity:0, y:-50, ease:'none' }, 0)
+        .to('.hero-bg',      { scale:1.25, ease:'none' }, 0)
+        .to('.hero-grid',    { yPercent:20, ease:'none' }, 0)
+        .to('.hero-glow1',   { yPercent:-26, ease:'none' }, 0)
+        .to('.hero-glow2',   { yPercent:18, ease:'none' }, 0);
+    }
 
-  // 5. CARD TILT (3D hover) — desktop only
-  if(!isMobile){
-    document.querySelectorAll('.svc-card, .why-card').forEach(function(card){
-      card.style.transition = 'transform 0.3s ease';
-      card.style.transformStyle = 'preserve-3d';
-      card.addEventListener('mousemove', function(e){
-        var r = card.getBoundingClientRect();
-        var x = (e.clientX - r.left)/r.width - 0.5;
-        var y = (e.clientY - r.top)/r.height - 0.5;
-        card.style.transform = 'translateY(-8px) rotateX('+(-y*5)+'deg) rotateY('+(x*5)+'deg)';
+    /* SECTION REVEALS — fade up on enter (1–2 elements per view) */
+    var revealSel = [
+      '.center', '.about-feat', '.water-callout',
+      '#service-area .container > div:last-child',
+      '.book-step', '.how-note',
+      '#reviewSummary', '#reviewCards', '#reviews .container > div:last-child',
+      '.trust-item', '.why-card', '.faq-item'
+    ];
+    revealSel.forEach(function(sel){
+      gsap.utils.toArray(sel).forEach(function(el){
+        gsap.fromTo(el,
+          { opacity:0, y:60*pf },
+          { opacity:1, y:0, duration:1, ease:'power3.out', clearProps:'transform',
+            scrollTrigger:{ trigger:el, start:'top 85%' } });
       });
-      card.addEventListener('mouseleave', function(){ card.style.transform = ''; });
     });
-  }
 
-  // Recalculate triggers once fonts/images settle
-  window.addEventListener('load', function(){ ScrollTrigger.refresh(); });
+    /* ABOUT — visual reveal + image parallax depth */
+    if(document.querySelector('.about-visual')){
+      gsap.fromTo('.about-visual',
+        { opacity:0, x:-40*pf },
+        { opacity:1, x:0, duration:1, ease:'power3.out', clearProps:'transform',
+          scrollTrigger:{ trigger:'.about', start:'top 80%' } });
+      gsap.to('.about-img-wrap',{ y:-34*pf, ease:'none',
+        scrollTrigger:{ trigger:'.about', start:'top bottom', end:'bottom top', scrub:true } });
+    }
+
+    /* PRICING — stagger reveal */
+    if(document.querySelector('.services-grid')){
+      gsap.fromTo('.svc-card',
+        { opacity:0, y:50 },
+        { opacity:1, y:0, duration:0.8, stagger:0.15, ease:'power3.out', clearProps:'transform',
+          scrollTrigger:{ trigger:'.services-grid', start:'top 80%' } });
+    }
+
+    /* HOW IT WORKS — staggered step pop + connector line draw */
+    var steps = document.querySelector('.how-steps');
+    if(steps){
+      gsap.fromTo('.how-step',
+        { opacity:0, y:50 },
+        { opacity:1, y:0, duration:0.8, stagger:0.2, ease:'power3.out', clearProps:'transform',
+          scrollTrigger:{ trigger:'.how', start:'top 72%' } });
+      if(!isMobile){
+        var conn = document.createElement('div'); conn.className = 'how-connector';
+        var fill = document.createElement('div'); fill.className = 'how-connector-fill';
+        conn.appendChild(fill); steps.appendChild(conn);
+        gsap.to(fill,{ width:'100%', ease:'none',
+          scrollTrigger:{ trigger:'.how', start:'top 65%', end:'center center', scrub:true } });
+      }
+    }
+
+    /* BEFORE/AFTER — cinematic scale-in + parallax drift */
+    if(document.getElementById('gallery')){
+      gsap.fromTo('#gWrap',
+        { scale:0.92 },
+        { scale:1, ease:'none',
+          scrollTrigger:{ trigger:'#gallery', start:'top bottom', end:'top center', scrub:true } });
+      gsap.to('#gallery .container',{ y:-30*pf, ease:'none',
+        scrollTrigger:{ trigger:'#gallery', start:'top bottom', end:'bottom top', scrub:true } });
+    }
+
+    /* CARD TILT (3D hover) — desktop only */
+    if(!isMobile){
+      document.querySelectorAll('.svc-card, .why-card').forEach(function(card){
+        card.style.transition = 'transform 0.3s ease';
+        card.style.transformStyle = 'preserve-3d';
+        card.addEventListener('mousemove', function(e){
+          var r = card.getBoundingClientRect();
+          var x = (e.clientX - r.left)/r.width - 0.5;
+          var y = (e.clientY - r.top)/r.height - 0.5;
+          card.style.transform = 'translateY(-8px) rotateX('+(-y*5)+'deg) rotateY('+(x*5)+'deg)';
+        });
+        card.addEventListener('mouseleave', function(){ card.style.transform = ''; });
+      });
+    }
+
+    /* Recalculate triggers once fonts/images settle */
+    window.addEventListener('load', function(){ ScrollTrigger.refresh(); });
+  });
 })();
 </script>
 </body>
