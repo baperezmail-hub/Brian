@@ -27,8 +27,6 @@ fbq('track', 'PageView');
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
 <style>
 :root{
@@ -86,11 +84,35 @@ button{font-family:inherit;}
 .mob-menu.open{transform:translateY(0);}
 .mob-menu a{font-size:20px;font-weight:600;}
 
+/* PROGRESS BAR */
+.scroll-progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--teal),var(--teal-bright));z-index:2000;box-shadow:0 0 12px rgba(63,217,160,.6);transition:width .85s cubic-bezier(.76,0,.24,1);}
+
+/* DECK / FULL-SCREEN SLIDES */
+.deck{position:fixed;inset:0;overflow:hidden;background:var(--navy);}
+.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;background:var(--navy);transform:translateY(100%);transition:transform .9s cubic-bezier(.76,0,.24,1);-webkit-overflow-scrolling:touch;}
+.slide.shown{transform:translateY(0);}
+/* section slides: the slide itself is the scroll container (block); the inner
+   .container does the vertical centering so tall content scrolls without clipping */
+.section.slide{padding:0;}
+.section.slide>.container{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding-top:90px;padding-bottom:90px;}
+footer.slide{min-height:100vh;display:flex;flex-direction:column;justify-content:center;}
+/* content reveals when its slide becomes the active one */
+.slide [data-reveal]{opacity:0;transform:translateY(34px);transition:opacity .7s ease,transform .7s ease;transition-delay:.15s;}
+.slide.shown [data-reveal]{opacity:1;transform:none;}
+.slide [data-stagger]>*{opacity:0;transform:translateY(42px);transition:opacity .6s ease,transform .6s ease;}
+.slide.shown [data-stagger]>*{opacity:1;transform:none;}
+.slide.shown [data-stagger]>*:nth-child(1){transition-delay:.18s;}
+.slide.shown [data-stagger]>*:nth-child(2){transition-delay:.30s;}
+.slide.shown [data-stagger]>*:nth-child(3){transition-delay:.42s;}
+.slide.shown [data-stagger]>*:nth-child(4){transition-delay:.54s;}
+.slide.shown [data-stagger]>*:nth-child(5){transition-delay:.66s;}
+.slide.shown [data-stagger]>*:nth-child(6){transition-delay:.78s;}
+
 /* HERO */
-.scroll-progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--teal),var(--teal-bright));z-index:1000;box-shadow:0 0 12px rgba(63,217,160,.6);}
-.hero{position:relative;height:320vh;}
-.hero-sticky{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-.hero-bg{position:absolute;inset:0;z-index:0;will-change:transform;transform-origin:50% 42%;}
+.hero{position:relative;}
+.hero-sticky{position:relative;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;z-index:0;}
+.hero .marquee-wrap{position:absolute;bottom:0;left:0;width:100%;z-index:3;}
 .aurora{position:absolute;border-radius:50%;filter:blur(90px);opacity:.35;}
 .aurora-1{width:520px;height:520px;background:var(--teal);top:-160px;left:-120px;animation:drift1 18s ease-in-out infinite;}
 .aurora-2{width:460px;height:460px;background:#3a6ea5;top:30%;right:-160px;animation:drift2 22s ease-in-out infinite;}
@@ -111,7 +133,7 @@ button{font-family:inherit;}
 .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:30px;}
 .hero-trust{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
 .hero-trust-item{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.78);padding:7px 16px;border-radius:50px;font-size:12px;backdrop-filter:blur(8px);}
-.scroll-ind{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.scroll-ind{position:absolute;bottom:74px;left:50%;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:10px;}
 .scroll-ind span{font-size:11px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.2em;}
 .scroll-ind .line{width:1px;height:36px;background:linear-gradient(var(--teal),transparent);}
 
@@ -243,7 +265,7 @@ footer li a:hover{color:var(--teal-bright);}
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
   Book Now — Instant
 </a>
-<div id="floatReviewWrap" onclick="document.getElementById('reviews').scrollIntoView({behavior:'smooth'})">
+<div id="floatReviewWrap" onclick="window.goToSlideById && window.goToSlideById('reviews')">
   <div id="floatReview" style="display:flex;align-items:center;gap:3px;">
     <span style="font-size:15px;">★</span><span style="font-size:12px;font-weight:700;color:#fff;margin-left:2px;">5</span>
   </div>
@@ -282,8 +304,11 @@ footer li a:hover{color:var(--teal-bright);}
   <a href="https://app.squareup.com/appointments/book/32mcwgnkynduia/LV3PZACYGQBEM/start" onclick="closeMenu()">Book Now — Instant</a>
 </div>
 
+<!-- DECK: full-screen slides -->
+<div class="deck" id="deck">
+
 <!-- HERO -->
-<section class="hero" id="hero">
+<section class="hero slide" id="hero">
   <div class="hero-sticky">
   <div class="hero-bg" id="heroBg">
     <div class="aurora aurora-1"></div>
@@ -319,10 +344,9 @@ footer li a:hover{color:var(--teal-bright);}
     <div class="line"></div>
   </div>
   </div>
-</section>
 
-<!-- MARQUEE -->
-<div class="marquee-wrap">
+  <!-- MARQUEE (folded into hero slide) -->
+  <div class="marquee-wrap">
   <div class="marquee-track" id="marquee">
     <div class="marquee-item"><span class="marquee-dot"></span>Bin Cleaning from $25</div>
     <div class="marquee-item"><span class="marquee-dot"></span>Pressure Washed</div>
@@ -345,10 +369,11 @@ footer li a:hover{color:var(--teal-bright);}
     <div class="marquee-item"><span class="marquee-dot"></span>Driveways & Sidewalks</div>
     <div class="marquee-item"><span class="marquee-dot"></span>Miami-Dade</div>
   </div>
-</div>
+  </div>
+</section>
 
 <!-- ABOUT -->
-<section class="section about" id="about">
+<section class="section about slide" id="about">
   <div class="container about-grid">
     <div data-reveal>
       <div class="eyebrow">Who We Are</div>
@@ -373,7 +398,7 @@ footer li a:hover{color:var(--teal-bright);}
 </section>
 
 <!-- SERVICES / PRICING -->
-<section class="section services" id="services">
+<section class="section services slide" id="services">
   <div class="container">
     <div class="center" style="max-width:640px;" data-reveal>
       <div class="eyebrow">Pricing</div>
@@ -462,7 +487,7 @@ footer li a:hover{color:var(--teal-bright);}
 </section>
 
 <!-- SERVICE AREA -->
-<section class="section" id="service-area" style="background:var(--navy-mid);">
+<section class="section slide" id="service-area" style="background:var(--navy-mid);">
   <div class="container">
     <div class="center" style="max-width:640px;" data-reveal>
       <div class="eyebrow">Service Area</div>
@@ -498,7 +523,7 @@ footer li a:hover{color:var(--teal-bright);}
 </section>
 
 <!-- GALLERY -->
-<section class="section" id="gallery" style="background:transparent;">
+<section class="section slide" id="gallery" style="background:transparent;">
   <div class="container">
     <div class="center" style="max-width:640px;" data-reveal>
       <div class="eyebrow">Results</div>
@@ -520,7 +545,7 @@ footer li a:hover{color:var(--teal-bright);}
 </section>
 
 <!-- REVIEWS -->
-<section class="section" id="reviews" style="background:var(--navy-mid);">
+<section class="section slide" id="reviews" style="background:var(--navy-mid);">
   <div class="container">
     <div class="center" style="max-width:640px;" data-reveal>
       <div class="eyebrow">Reviews</div>
@@ -549,7 +574,7 @@ footer li a:hover{color:var(--teal-bright);}
 </section>
 
 <!-- BOOK CTA -->
-<section class="section book-cta" id="book">
+<section class="section book-cta slide" id="book">
   <div class="container center" style="max-width:680px;" data-reveal>
     <div class="eyebrow">Ready When You Are</div>
     <h2 class="h2">Book your appointment<br>in under 60 seconds</h2>
@@ -559,7 +584,7 @@ footer li a:hover{color:var(--teal-bright);}
 </section>
 
 <!-- HOW IT WORKS -->
-<section class="section how" id="how">
+<section class="section how slide" id="how">
   <div class="container">
     <div class="center" style="max-width:640px;" data-reveal>
       <div class="eyebrow">Process</div>
@@ -574,18 +599,8 @@ footer li a:hover{color:var(--teal-bright);}
   </div>
 </section>
 
-<!-- TRUST STRIP -->
-<div class="trust-strip">
-  <div class="container trust-grid" data-stagger>
-    <div data-reveal><div class="ico">✓</div><span>Professionally Operated</span></div>
-    <div data-reveal><div class="ico">🌿</div><span>Eco-Friendly Products</span></div>
-    <div data-reveal><div class="ico">🚫</div><span>No Cancellation Fees</span></div>
-    <div data-reveal><div class="ico">🌐</div><span>EN / ES / IT</span></div>
-  </div>
-</div>
-
 <!-- WHY -->
-<section class="section why" id="why">
+<section class="section why slide" id="why">
   <div class="container">
     <div class="center" style="max-width:640px;" data-reveal>
       <div class="eyebrow">Why Choose Us</div>
@@ -599,11 +614,19 @@ footer li a:hover{color:var(--teal-bright);}
       <div class="why-card" data-reveal><h3>Local Miami-Dade Experts</h3><p>We know the neighborhoods, the heat, and what it takes to keep bins fresh.</p></div>
       <div class="why-card" data-reveal><h3>Transparent Pricing</h3><p>No hidden fees. The price you see is the price you pay.</p></div>
     </div>
+    <div class="trust-strip" style="margin-top:48px;border-radius:var(--rl);">
+      <div class="container trust-grid" data-stagger>
+        <div data-reveal><div class="ico">✓</div><span>Professionally Operated</span></div>
+        <div data-reveal><div class="ico">🌿</div><span>Eco-Friendly Products</span></div>
+        <div data-reveal><div class="ico">🚫</div><span>No Cancellation Fees</span></div>
+        <div data-reveal><div class="ico">🌐</div><span>EN / ES / IT</span></div>
+      </div>
+    </div>
   </div>
 </section>
 
 <!-- FAQ -->
-<section class="section faq" id="faq" style="background:var(--navy-mid);">
+<section class="section faq slide" id="faq" style="background:var(--navy-mid);">
   <div class="container" style="max-width:760px;">
     <div class="center" style="max-width:640px;" data-reveal>
       <div class="eyebrow">FAQ</div>
@@ -623,7 +646,7 @@ footer li a:hover{color:var(--teal-bright);}
 </section>
 
 <!-- FOOTER -->
-<footer>
+<footer class="slide">
   <div class="container">
     <div class="footer-grid">
       <div>
@@ -660,6 +683,8 @@ footer li a:hover{color:var(--teal-bright);}
   </div>
 </footer>
 
+</div><!-- /deck -->
+
 <script>
 // Hero fade-in
 setTimeout(() => {
@@ -670,35 +695,6 @@ setTimeout(() => {
     }, i * 120);
   });
 }, 200);
-
-// Hero scroll-scrub zoom (Apple-style pinned hero)
-(function(){
-  const hero = document.getElementById('hero');
-  const bg = document.getElementById('heroBg');
-  const content = document.getElementById('heroContent');
-  const scrollInd = document.getElementById('scrollInd');
-  if(!hero || !bg || !content) return;
-  let ticking = false;
-  function update(){
-    const rect = hero.getBoundingClientRect();
-    const scrollable = hero.offsetHeight - window.innerHeight;
-    const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
-    // Background zooms in as you scroll
-    bg.style.transform = 'scale(' + (1 + progress * 0.9) + ')';
-    bg.style.opacity = String(1 - progress * 0.25);
-    // Content scales up slightly and fades out in the second half
-    const contentScale = 1 + progress * 0.18;
-    const contentFade = progress < 0.55 ? 1 : Math.max(0, 1 - (progress - 0.55) / 0.4);
-    content.style.transform = 'translateY(' + (-progress * 40) + 'px) scale(' + contentScale + ')';
-    content.style.opacity = String(contentFade);
-    if(scrollInd) scrollInd.style.opacity = String(Math.max(0, 1 - progress * 4));
-    ticking = false;
-  }
-  window.addEventListener('scroll', function(){
-    if(!ticking){ requestAnimationFrame(update); ticking = true; }
-  }, {passive:true});
-  update();
-})();
 
 // Mobile menu
 function toggleMenu(){document.getElementById('mobMenu').classList.toggle('open');}
@@ -839,58 +835,106 @@ function submitReview() {
   renderReviews();
 }
 loadReviews();
-window.addEventListener('scroll',function(){
-  var fw=document.getElementById('floatReviewWrap');
-  if(fw)fw.style.opacity=window.scrollY>300?'1':'0';
-});
 
-// GSAP scroll animations
-gsap.registerPlugin(ScrollTrigger);
-
-// Staggered group reveals — cards cascade in one-by-one as the section enters
-const staggerHandled = new Set();
-gsap.utils.toArray('[data-stagger]').forEach(group => {
-  const items = gsap.utils.toArray(group.children);
-  items.forEach(i => staggerHandled.add(i));
-  gsap.fromTo(items,
-    { opacity: 0, y: 60 },
-    { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', stagger: 0.12,
-      scrollTrigger: { trigger: group, start: 'top 82%' } }
-  );
-});
-
-// Single-element reveals (skip anything already handled by a stagger group)
-gsap.utils.toArray('[data-reveal]').forEach(el => {
-  if (staggerHandled.has(el)) return;
-  gsap.fromTo(el,
-    { opacity: 0, y: 50 },
-    { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out',
-      scrollTrigger: { trigger: el, start: 'top 88%' } }
-  );
-});
-
-// Subtle parallax drift on section headings as they pass through
-gsap.utils.toArray('.h2').forEach(h => {
-  gsap.fromTo(h,
-    { y: 40 },
-    { y: -40, ease: 'none',
-      scrollTrigger: { trigger: h, start: 'top bottom', end: 'bottom top', scrub: true } }
-  );
-});
-
-const progressBar = document.getElementById('scrollProgress');
-window.addEventListener('scroll', () => {
-  // Scroll progress bar
-  if (progressBar) {
-    const docH = document.documentElement.scrollHeight - window.innerHeight;
-    progressBar.style.width = (docH > 0 ? (window.scrollY / docH) * 100 : 0) + '%';
-  }
+// FULL-SCREEN SLIDE DECK — one scroll gesture advances one slide
+(function(){
+  const deck = document.getElementById('deck');
+  if(!deck) return;
+  const slides = Array.from(deck.querySelectorAll('.slide'));
+  const progressBar = document.getElementById('scrollProgress');
   const nav = document.getElementById('nav');
-  if (!nav) return;
-  nav.style.background = window.scrollY > 60 ? 'rgba(10,22,40,.85)' : 'transparent';
-  nav.style.backdropFilter = window.scrollY > 60 ? 'blur(20px)' : 'blur(0)';
-  nav.style.boxShadow = window.scrollY > 60 ? '0 8px 40px rgba(0,0,0,.4)' : 'none';
-}, {passive:true});
+  const floatReview = document.getElementById('floatReviewWrap');
+  let current = 0, animating = false, lockUntil = 0;
+
+  function render(){
+    slides.forEach((s, i) => {
+      s.classList.toggle('shown', i <= current);
+      s.classList.toggle('is-current', i === current);
+    });
+    if(progressBar) progressBar.style.width = (slides.length > 1 ? (current / (slides.length - 1)) * 100 : 0) + '%';
+    if(nav){
+      const solid = current > 0;
+      nav.style.background = solid ? 'rgba(10,22,40,.85)' : 'transparent';
+      nav.style.backdropFilter = solid ? 'blur(20px)' : 'none';
+      nav.style.boxShadow = solid ? '0 8px 40px rgba(0,0,0,.4)' : 'none';
+    }
+    if(floatReview) floatReview.style.opacity = current > 0 ? '1' : '0';
+  }
+
+  function go(n){
+    n = Math.max(0, Math.min(slides.length - 1, n));
+    if(n === current || animating) return;
+    current = n;
+    animating = true;
+    lockUntil = Date.now() + 1050;
+    render();
+    // start each newly-entered slide from the top
+    requestAnimationFrame(() => { if(slides[current]) slides[current].scrollTop = 0; });
+    setTimeout(() => { animating = false; }, 950);
+  }
+  window.goToSlide = go;
+  window.goToSlideById = function(id){
+    let idx = slides.findIndex(s => s.id === id);
+    if(idx < 0) idx = slides.findIndex(s => s.querySelector('#' + id));
+    if(idx >= 0) go(idx);
+  };
+
+  // true when the current slide's own content can't scroll further in `dir`
+  function atEdge(slide, dir){
+    const canScroll = slide.scrollHeight > slide.clientHeight + 2;
+    if(!canScroll) return true;
+    if(dir > 0) return slide.scrollTop + slide.clientHeight >= slide.scrollHeight - 2;
+    return slide.scrollTop <= 2;
+  }
+
+  deck.addEventListener('wheel', function(e){
+    const dir = e.deltaY > 0 ? 1 : -1;
+    const slide = slides[current];
+    if(!atEdge(slide, dir)) return;           // let the slide scroll its own overflow first
+    e.preventDefault();
+    if(animating || Date.now() < lockUntil) return;
+    if(Math.abs(e.deltaY) < 6) return;
+    go(current + dir);
+  }, { passive:false });
+
+  window.addEventListener('keydown', function(e){
+    if(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    if(e.key === 'ArrowDown' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey)){
+      if(atEdge(slides[current], 1)){ e.preventDefault(); go(current + 1); }
+    } else if(e.key === 'ArrowUp' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey)){
+      if(atEdge(slides[current], -1)){ e.preventDefault(); go(current - 1); }
+    } else if(e.key === 'Home'){ e.preventDefault(); go(0); }
+    else if(e.key === 'End'){ e.preventDefault(); go(slides.length - 1); }
+  });
+
+  // touch swipe
+  let touchY = null;
+  deck.addEventListener('touchstart', function(e){ touchY = e.touches[0].clientY; }, { passive:true });
+  deck.addEventListener('touchmove', function(e){
+    if(touchY === null) return;
+    const dy = touchY - e.touches[0].clientY;
+    const dir = dy > 0 ? 1 : -1;
+    if(Math.abs(dy) < 48) return;
+    if(!atEdge(slides[current], dir)) return;
+    if(animating || Date.now() < lockUntil) return;
+    go(current + dir);
+    touchY = null;
+  }, { passive:true });
+  deck.addEventListener('touchend', function(){ touchY = null; });
+
+  // nav / footer anchor links jump straight to the matching slide
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    const id = a.getAttribute('href').slice(1);
+    if(!id) return;
+    a.addEventListener('click', function(e){
+      let idx = slides.findIndex(s => s.id === id);
+      if(idx < 0) idx = slides.findIndex(s => s.querySelector('#' + (window.CSS && CSS.escape ? CSS.escape(id) : id)));
+      if(idx >= 0){ e.preventDefault(); if(typeof closeMenu === 'function') closeMenu(); go(idx); }
+    });
+  });
+
+  render();
+})();
 
 document.querySelectorAll('.svc-card').forEach(card => {
   card.addEventListener('mousemove', e => {
