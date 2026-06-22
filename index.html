@@ -87,6 +87,7 @@ button{font-family:inherit;}
 .mob-menu a{font-size:20px;font-weight:600;}
 
 /* HERO */
+.scroll-progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--teal),var(--teal-bright));z-index:1000;box-shadow:0 0 12px rgba(63,217,160,.6);}
 .hero{position:relative;height:320vh;}
 .hero-sticky{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
 .hero-bg{position:absolute;inset:0;z-index:0;will-change:transform;transform-origin:50% 42%;}
@@ -234,6 +235,8 @@ footer li a:hover{color:var(--teal-bright);}
 </style>
 </head>
 <body>
+
+<div class="scroll-progress" id="scrollProgress"></div>
 
 <!-- FLOATING BUTTONS -->
 <a href="https://app.squareup.com/appointments/book/32mcwgnkynduia/LV3PZACYGQBEM/start" class="float-book">
@@ -562,7 +565,7 @@ footer li a:hover{color:var(--teal-bright);}
       <div class="eyebrow">Process</div>
       <h2 class="h2">How it works</h2>
     </div>
-    <div class="how-grid">
+    <div class="how-grid" data-stagger>
       <div class="how-step" data-reveal><div class="how-num">01</div><h3>Book online</h3><p>Pick your service and time slot — takes about 60 seconds.</p></div>
       <div class="how-step" data-reveal><div class="how-num">02</div><h3>We connect & clean</h3><p>We connect to your outdoor spigot — no water truck needed — and get to work.</p></div>
       <div class="how-step" data-reveal><div class="how-num">03</div><h3>Sanitize & deodorize</h3><p>Eco-friendly, pet-safe products eliminate bacteria and odor inside and out.</p></div>
@@ -573,7 +576,7 @@ footer li a:hover{color:var(--teal-bright);}
 
 <!-- TRUST STRIP -->
 <div class="trust-strip">
-  <div class="container trust-grid">
+  <div class="container trust-grid" data-stagger>
     <div data-reveal><div class="ico">✓</div><span>Professionally Operated</span></div>
     <div data-reveal><div class="ico">🌿</div><span>Eco-Friendly Products</span></div>
     <div data-reveal><div class="ico">🚫</div><span>No Cancellation Fees</span></div>
@@ -588,7 +591,7 @@ footer li a:hover{color:var(--teal-bright);}
       <div class="eyebrow">Why Choose Us</div>
       <h2 class="h2">The Prestige difference</h2>
     </div>
-    <div class="why-grid">
+    <div class="why-grid" data-stagger>
       <div class="why-card" data-reveal><h3>No Commitments, Ever</h3><p>Cancel anytime — no cancellation fees, period.</p></div>
       <div class="why-card" data-reveal><h3>Eco-Friendly & Pet-Safe</h3><p>Commercial-grade products that are safe for kids, pets, and landscaping.</p></div>
       <div class="why-card" data-reveal><h3>Bilingual Service</h3><p>We communicate in English, Spanish, or Italian — your choice.</p></div>
@@ -843,7 +846,22 @@ window.addEventListener('scroll',function(){
 
 // GSAP scroll animations
 gsap.registerPlugin(ScrollTrigger);
+
+// Staggered group reveals — cards cascade in one-by-one as the section enters
+const staggerHandled = new Set();
+gsap.utils.toArray('[data-stagger]').forEach(group => {
+  const items = gsap.utils.toArray(group.children);
+  items.forEach(i => staggerHandled.add(i));
+  gsap.fromTo(items,
+    { opacity: 0, y: 60 },
+    { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', stagger: 0.12,
+      scrollTrigger: { trigger: group, start: 'top 82%' } }
+  );
+});
+
+// Single-element reveals (skip anything already handled by a stagger group)
 gsap.utils.toArray('[data-reveal]').forEach(el => {
+  if (staggerHandled.has(el)) return;
   gsap.fromTo(el,
     { opacity: 0, y: 50 },
     { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out',
@@ -851,13 +869,28 @@ gsap.utils.toArray('[data-reveal]').forEach(el => {
   );
 });
 
+// Subtle parallax drift on section headings as they pass through
+gsap.utils.toArray('.h2').forEach(h => {
+  gsap.fromTo(h,
+    { y: 40 },
+    { y: -40, ease: 'none',
+      scrollTrigger: { trigger: h, start: 'top bottom', end: 'bottom top', scrub: true } }
+  );
+});
+
+const progressBar = document.getElementById('scrollProgress');
 window.addEventListener('scroll', () => {
+  // Scroll progress bar
+  if (progressBar) {
+    const docH = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (docH > 0 ? (window.scrollY / docH) * 100 : 0) + '%';
+  }
   const nav = document.getElementById('nav');
   if (!nav) return;
   nav.style.background = window.scrollY > 60 ? 'rgba(10,22,40,.85)' : 'transparent';
   nav.style.backdropFilter = window.scrollY > 60 ? 'blur(20px)' : 'blur(0)';
   nav.style.boxShadow = window.scrollY > 60 ? '0 8px 40px rgba(0,0,0,.4)' : 'none';
-});
+}, {passive:true});
 
 document.querySelectorAll('.svc-card').forEach(card => {
   card.addEventListener('mousemove', e => {
