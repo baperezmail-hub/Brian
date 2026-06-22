@@ -87,8 +87,9 @@ button{font-family:inherit;}
 .mob-menu a{font-size:20px;font-weight:600;}
 
 /* HERO */
-.hero{min-height:100vh;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-.hero-bg{position:absolute;inset:0;z-index:0;}
+.hero{position:relative;height:320vh;}
+.hero-sticky{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;z-index:0;will-change:transform;transform-origin:50% 42%;}
 .aurora{position:absolute;border-radius:50%;filter:blur(90px);opacity:.35;}
 .aurora-1{width:520px;height:520px;background:var(--teal);top:-160px;left:-120px;animation:drift1 18s ease-in-out infinite;}
 .aurora-2{width:460px;height:460px;background:#3a6ea5;top:30%;right:-160px;animation:drift2 22s ease-in-out infinite;}
@@ -98,7 +99,7 @@ button{font-family:inherit;}
 @keyframes drift3{0%,100%{transform:translate(0,0);}50%{transform:translate(40px,-50px);}}
 .hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse 60% 50% at 50% 40%,#000 40%,transparent 100%);}
 .hero-vignette{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 30%,transparent 0%,var(--navy) 90%);}
-.hero-content{position:relative;z-index:2;text-align:center;padding:0 24px;max-width:760px;}
+.hero-content{position:relative;z-index:2;text-align:center;padding:0 24px;max-width:760px;will-change:transform,opacity;}
 .hero-content>*{opacity:0;}
 .hero-pill{display:inline-flex;align-items:center;gap:10px;padding:8px 18px;border-radius:50px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);font-size:12px;text-transform:uppercase;letter-spacing:.25em;color:rgba(245,245,245,.75);margin-bottom:28px;}
 .hero-pill-dot{width:6px;height:6px;border-radius:50%;background:var(--teal-bright);}
@@ -279,15 +280,16 @@ footer li a:hover{color:var(--teal-bright);}
 </div>
 
 <!-- HERO -->
-<section class="hero">
-  <div class="hero-bg">
+<section class="hero" id="hero">
+  <div class="hero-sticky">
+  <div class="hero-bg" id="heroBg">
     <div class="aurora aurora-1"></div>
     <div class="aurora aurora-2"></div>
     <div class="aurora aurora-3"></div>
     <div class="hero-grid"></div>
     <div class="hero-vignette"></div>
   </div>
-  <div class="hero-content">
+  <div class="hero-content" id="heroContent">
     <div class="hero-pill" data-hero-text>
       <span class="hero-pill-dot"></span>
       <span>Miami's Premier Bin Cleaning Service</span>
@@ -309,9 +311,10 @@ footer li a:hover{color:var(--teal-bright);}
       <span class="hero-trust-item">✓ EN / ES / IT</span>
     </div>
   </div>
-  <div class="scroll-ind">
+  <div class="scroll-ind" id="scrollInd">
     <span>Scroll</span>
     <div class="line"></div>
+  </div>
   </div>
 </section>
 
@@ -664,6 +667,35 @@ setTimeout(() => {
     }, i * 120);
   });
 }, 200);
+
+// Hero scroll-scrub zoom (Apple-style pinned hero)
+(function(){
+  const hero = document.getElementById('hero');
+  const bg = document.getElementById('heroBg');
+  const content = document.getElementById('heroContent');
+  const scrollInd = document.getElementById('scrollInd');
+  if(!hero || !bg || !content) return;
+  let ticking = false;
+  function update(){
+    const rect = hero.getBoundingClientRect();
+    const scrollable = hero.offsetHeight - window.innerHeight;
+    const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+    // Background zooms in as you scroll
+    bg.style.transform = 'scale(' + (1 + progress * 0.9) + ')';
+    bg.style.opacity = String(1 - progress * 0.25);
+    // Content scales up slightly and fades out in the second half
+    const contentScale = 1 + progress * 0.18;
+    const contentFade = progress < 0.55 ? 1 : Math.max(0, 1 - (progress - 0.55) / 0.4);
+    content.style.transform = 'translateY(' + (-progress * 40) + 'px) scale(' + contentScale + ')';
+    content.style.opacity = String(contentFade);
+    if(scrollInd) scrollInd.style.opacity = String(Math.max(0, 1 - progress * 4));
+    ticking = false;
+  }
+  window.addEventListener('scroll', function(){
+    if(!ticking){ requestAnimationFrame(update); ticking = true; }
+  }, {passive:true});
+  update();
+})();
 
 // Mobile menu
 function toggleMenu(){document.getElementById('mobMenu').classList.toggle('open');}
