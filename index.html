@@ -591,6 +591,14 @@ body{counter-reset:chapter;}
 @media (max-width:820px){
   .zj-title{font-size:clamp(2.2rem,10vw,3.6rem);}
 }
+
+/* Preload gate — shown while journey media loads, scroll locked */
+body.zj-loading{overflow:hidden;height:100vh;}
+.zj-loader{position:fixed;inset:0;z-index:10001;background:#05101e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;opacity:1;transition:opacity .5s ease;}
+.zj-loader.zj-hidden{opacity:0;pointer-events:none;}
+.zj-loader span{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:700;}
+.zj-loader-bar{width:160px;height:2px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden;}
+.zj-loader-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--teal-bright));transition:width .25s ease;}
 </style>
 </head>
 <body>
@@ -743,15 +751,15 @@ body{counter-reset:chapter;}
 </div>
 <div class="zj-hud" id="zjHud"></div>
 <button class="zj-skip" id="zjSkip">Skip intro ↓</button>
+<div class="zj-loader" id="zjLoader">
+  <svg width="44" height="44" viewBox="0 0 500 500" fill="none"><rect width="500" height="500" rx="80" fill="#112240"/><path d="M250 80L370 130V230C370 310 318 370 250 390C182 370 130 310 130 230V130L250 80Z" fill="#1D9E75" opacity="0.15"/><path d="M250 80L370 130V230C370 310 318 370 250 390C182 370 130 310 130 230V130L250 80Z" stroke="#1D9E75" stroke-width="6" fill="none" stroke-linejoin="round"/><rect x="190" y="155" width="32" height="160" rx="9" fill="#1D9E75"/><path d="M222 155H292C310 155 325 170 325 188C325 206 310 221 292 221H222V155Z" fill="#1D9E75"/><path d="M222 221H294C312 221 327 236 327 254C327 272 312 287 294 287H222V221Z" fill="#1D9E75" opacity="0.45"/></svg>
+  <div class="zj-loader-bar"><div class="zj-loader-fill" id="zjLoaderFill"></div></div>
+  <span>Loading the experience…</span>
+</div>
 
 <!-- HERO -->
 <section class="hero">
   <div class="hero-bg">
-    <div class="hero-photo" style="position:absolute;inset:0;overflow:hidden;opacity:0.4;">
-      <video autoplay muted loop playsinline poster="https://d8j0ntlcm91z4.cloudfront.net/user_3FTS0hHarPnxMz8dL8PvScfOfpA/hf_20260623_175113_c97acd62-e528-4608-ac51-e3202fe528ee.png" style="width:100%;height:100%;object-fit:cover;">
-        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_3FTS0hHarPnxMz8dL8PvScfOfpA/hf_20260623_180948_39b94c01-9b7c-43b1-9c7f-a36e44052562.mp4" type="video/mp4">
-      </video>
-    </div>
     <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,40,.55) 0%,rgba(10,22,40,.85) 60%,var(--navy) 100%);"></div>
     <div class="aurora aurora-1"></div>
     <div class="aurora aurora-2"></div>
@@ -1604,17 +1612,10 @@ document.addEventListener('click', function(e){
         .from('.scroll-ind',   { opacity:0, duration:.8 }, '-=.30');
     }
 
-    /* HERO — pinned cinematic exit (zoom + fade + layered parallax) */
+    /* HERO — gentle parallax drift on exit (no pin, no dead-scroll zone) */
     if(document.querySelector('.hero')){
-      gsap.timeline({ scrollTrigger:{
-          trigger:'.hero', start:'top top', end:'+=110%',
-          scrub:true, pin:!isMobile, pinSpacing:!isMobile, anticipatePin:1 } })
-        .to('.hero-content', { scale:1.45, opacity:0, y:-50, ease:'none' }, 0)
-        .to('.hero-bg',      { scale:1.25, ease:'none' }, 0)
-        .to('.hero-photo',   { scale:1.4, yPercent:-12, ease:'none' }, 0)
-        .to('.hero-grid',    { yPercent:20, ease:'none' }, 0)
-        .to('.hero-glow1',   { yPercent:-26, ease:'none' }, 0)
-        .to('.hero-glow2',   { yPercent:18, ease:'none' }, 0);
+      gsap.to('.hero-bg', { yPercent:14*pf, ease:'none',
+        scrollTrigger:{ trigger:'.hero', start:'top top', end:'bottom top', scrub:true } });
     }
 
     /* SECTION REVEALS — fade up on enter (1–2 elements per view) */
@@ -1713,8 +1714,11 @@ document.addEventListener('click', function(e){
       });
     }
 
-    /* Recalculate triggers once fonts/images settle */
-    window.addEventListener('load', function(){ ScrollTrigger.refresh(); });
+    /* Note: deliberately no global ScrollTrigger.refresh() on window
+       'load' here — a refresh firing while the user is mid-scroll
+       through the pinned zoom journey re-measures its pin spacer and
+       can yank scroll position back to an earlier scene. Non-pinned
+       scrub triggers above self-correct without needing a refresh. */
   });
 })();
 </script>
@@ -1729,8 +1733,10 @@ document.addEventListener('click', function(e){
   var journey = document.getElementById('zoomJourney');
   if(!journey) return;
   var scenes = Array.prototype.slice.call(journey.querySelectorAll('.zj-scene'));
-  var hud  = document.getElementById('zjHud');
-  var skip = document.getElementById('zjSkip');
+  var hud    = document.getElementById('zjHud');
+  var skip   = document.getElementById('zjSkip');
+  var loader = document.getElementById('zjLoader');
+  var loaderFill = document.getElementById('zjLoaderFill');
   var n = scenes.length;
 
   var reduce  = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1740,11 +1746,60 @@ document.addEventListener('click', function(e){
   // Fallback: hide the journey, show the normal site untouched.
   if(reduce || noGsap || smallScreen){
     journey.style.display = 'none';
-    if(hud)  hud.style.display  = 'none';
-    if(skip) skip.style.display = 'none';
+    if(hud)    hud.style.display    = 'none';
+    if(skip)   skip.style.display   = 'none';
+    if(loader) loader.style.display = 'none';
+    document.body.classList.remove('zj-loading');
     return;
   }
 
+  // ── Preload gate: lock scroll until every scene's media is ready,
+  // then build the pin ONCE — never refresh ScrollTrigger afterward,
+  // since a late refresh while the user is mid-scroll re-measures the
+  // pin spacer and yanks scroll position back to an earlier scene. ──
+  document.body.classList.add('zj-loading');
+  var media = [];
+  scenes.forEach(function(s){
+    var v = s.querySelector('video');
+    var i = s.querySelector('img');
+    if(v) media.push(v);
+    if(i) media.push(i);
+  });
+  var doneCount = 0, total = media.length || 1;
+  function bump(){
+    doneCount++;
+    if(loaderFill) loaderFill.style.width = Math.min(100, Math.round(doneCount/total*100)) + '%';
+  }
+  function isVideoReady(v){ return v.readyState >= 3; }
+  function isImgReady(i){ return i.complete && i.naturalWidth > 0; }
+  function waitFor(el){
+    return new Promise(function(resolve){
+      if(el.tagName === 'VIDEO'){
+        if(isVideoReady(el)){ bump(); resolve(); return; }
+        var onReady = function(){ el.removeEventListener('loadeddata', onReady); el.removeEventListener('canplay', onReady); bump(); resolve(); };
+        el.addEventListener('loadeddata', onReady);
+        el.addEventListener('canplay', onReady);
+      } else {
+        if(isImgReady(el)){ bump(); resolve(); return; }
+        var onLoad = function(){ el.removeEventListener('load', onLoad); el.removeEventListener('error', onLoad); bump(); resolve(); };
+        el.addEventListener('load', onLoad);
+        el.addEventListener('error', onLoad);
+      }
+    });
+  }
+  var ready = Promise.all(media.map(waitFor));
+  var timeout = new Promise(function(resolve){ setTimeout(resolve, 4000); }); // never block forever
+
+  Promise.race([ready, timeout]).then(function(){
+    if(loader){
+      loader.classList.add('zj-hidden');
+      setTimeout(function(){ loader.style.display = 'none'; }, 550);
+    }
+    document.body.classList.remove('zj-loading');
+    init();
+  });
+
+  function init(){
   // Build HUD dots
   for(var i=0;i<n;i++){
     var d=document.createElement('span'); d.className='zj-dot'; if(i===0)d.classList.add('act');
@@ -1803,7 +1858,12 @@ document.addEventListener('click', function(e){
     }
   });
 
-  window.addEventListener('load', function(){ ScrollTrigger.refresh(); });
+  // One-time refresh right after the pin is built (media already loaded,
+  // so layout is final) — deliberately no later refresh calls, since a
+  // refresh while mid-scroll re-measures the spacer and can throw scroll
+  // position back to an earlier scene.
+  ScrollTrigger.refresh();
+  } // end init()
 })();
 </script>
 </body>
