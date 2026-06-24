@@ -551,11 +551,21 @@ body{counter-reset:chapter;}
 .zj-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,rgba(8,18,34,.30) 0%,rgba(8,18,34,.72) 70%,rgba(5,16,30,.92) 100%);}
 .zj-grain{position:absolute;inset:0;opacity:.5;background-image:radial-gradient(circle at 50% 50%,rgba(63,217,160,.10),transparent 60%);}
 /* before/after collage backdrop for the gallery scene */
-.zj-collage{position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:6px;padding:6px;}
-.zj-collage .c{position:relative;overflow:hidden;border-radius:6px;}
-.zj-collage .c img{width:100%;height:100%;object-fit:cover;transform:scale(1.02);}
-.zj-collage .c::after{content:'';position:absolute;inset:0;background:rgba(8,18,34,.18);}
-@media(max-width:820px){ .zj-collage{grid-template-columns:repeat(2,1fr);} }
+.zj-collage{position:absolute;inset:0;}
+.zj-collage .c{position:absolute;width:21%;aspect-ratio:4/3;overflow:hidden;border-radius:10px;box-shadow:0 14px 40px rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);}
+.zj-collage .c img{width:100%;height:100%;object-fit:cover;}
+.zj-collage .c::after{content:'';position:absolute;inset:0;background:rgba(8,18,34,.22);}
+.zj-collage .c:nth-child(1){top:6%;left:5%;}
+.zj-collage .c:nth-child(2){top:6%;right:5%;}
+.zj-collage .c:nth-child(3){top:38%;left:2.5%;width:17%;}
+.zj-collage .c:nth-child(4){top:38%;right:2.5%;width:17%;}
+.zj-collage .c:nth-child(5){bottom:6%;left:5%;}
+.zj-collage .c:nth-child(6){bottom:6%;right:5%;}
+.zj-collage::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 42% 55% at 50% 50%,rgba(8,18,34,.92) 0%,rgba(8,18,34,.55) 60%,rgba(8,18,34,0) 100%);z-index:1;}
+@media(max-width:820px){
+  .zj-collage .c{display:none;}
+  .zj-collage .c:nth-child(1),.zj-collage .c:nth-child(2),.zj-collage .c:nth-child(5),.zj-collage .c:nth-child(6){display:block;width:30%;}
+}
 .zj-inner{position:relative;z-index:3;max-width:920px;padding:0 30px;}
 .zj-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--teal-bright);margin-bottom:22px;}
 .zj-eyebrow::before,.zj-eyebrow::after{content:'';width:26px;height:1px;background:linear-gradient(90deg,transparent,rgba(63,217,160,.7),transparent);}
@@ -763,60 +773,6 @@ body.zj-loading{overflow:hidden;height:100vh;}
   <span>Loading the experience…</span>
 </div>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-bg">
-    <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,40,.55) 0%,rgba(10,22,40,.85) 60%,var(--navy) 100%);"></div>
-    <div class="aurora aurora-1"></div>
-    <div class="aurora aurora-2"></div>
-    <div class="aurora aurora-3"></div>
-    <div class="hero-grid"></div>
-    <div class="hero-glow1"></div>
-    <div class="hero-glow2"></div>
-    <div class="hero-vignette"></div>
-  </div>
-  <div class="hero-content">
-    <div class="hero-pill">
-      <span class="hero-pill-dot"></span>
-      <span>Miami's Premier Bin Cleaning Service</span>
-      <span class="hero-pill-dot"></span>
-    </div>
-    <h1><span style="white-space:nowrap;">Prestige <span class="accent">Bin</span></span><br>Services</h1>
-    <p class="hero-tagline">Sanitized. Deodorized. Done.</p>
-    <p class="hero-sub">Miami's heat turns your trash bins into bacteria factories. We pressure wash, sanitize, and deodorize them right at your home — starting at just $25. No cancellation fees, ever. Book your spot instantly online.</p>
-    <div class="hero-ctas">
-      <a href="https://app.squareup.com/appointments/book/32mcwgnkynduia/LV3PZACYGQBEM/start" class="btn btn-teal">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Book Your Appointment
-      </a>
-      <a href="#services" class="btn btn-outline">View Pricing</a>
-    </div>
-    <div class="hero-trust">
-      <div class="hero-trust-item">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        Professionally Operated
-      </div>
-      <div class="hero-trust-item">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        No cancellation fees, ever
-      </div>
-      <div class="hero-trust-item">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        EN / ES / IT
-      </div>
-      <div class="hero-trust-item">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        Mon–Fri 7am–1pm · Thu–Fri til 4pm · Sat–Sun 9am–2pm
-      </div>
-    </div>
-  </div>
-  <div class="scroll-ind">
-    <span>Scroll</span>
-    <div class="line"></div>
-  </div>
-</section>
-
-<!-- MARQUEE -->
 <div class="marquee-wrap">
   <div class="marquee-track" id="marquee">
     <div class="marquee-item"><span class="marquee-dot"></span>Professionally Operated</div>
@@ -1626,7 +1582,7 @@ document.addEventListener('click', function(e){
 
     /* SECTION REVEALS — fade up on enter (1–2 elements per view) */
     var revealSel = [
-      '.center', '.about-feat', '.water-callout',
+      '.about-feat', '.water-callout',
       '#service-area .container > div:last-child',
       '.book-step', '.how-note',
       '#reviewSummary', '#reviewCards', '#reviews .container > div:last-child',
@@ -1857,9 +1813,9 @@ document.addEventListener('click', function(e){
   });
 
   skip.addEventListener('click', function(){
-    var hero = document.querySelector('.hero');
-    if(hero){
-      var y = window.scrollY + hero.getBoundingClientRect().top;
+    var dest = document.querySelector('.marquee-wrap') || document.getElementById('about');
+    if(dest){
+      var y = window.scrollY + dest.getBoundingClientRect().top;
       window.scrollTo({ top:y+2, behavior:'smooth' });
     }
   });
