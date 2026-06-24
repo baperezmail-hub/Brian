@@ -58,6 +58,7 @@ a{color:inherit;text-decoration:none;}
 .glow-a{width:60vw;height:60vw;left:-15vw;top:-10vw;background:radial-gradient(circle,rgba(40,192,138,.32),transparent 70%);}
 .glow-b{width:50vw;height:50vw;right:-12vw;bottom:-14vw;background:radial-gradient(circle,rgba(31,90,140,.4),transparent 70%);}
 .tex{position:absolute;inset:-6%;width:112%;height:112%;object-fit:cover;mix-blend-mode:screen;pointer-events:none;opacity:0;will-change:transform,opacity;z-index:1;}
+.warp{position:fixed;inset:0;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.95),rgba(63,217,160,.4) 45%,transparent 75%);pointer-events:none;z-index:60;opacity:0;mix-blend-mode:screen;will-change:opacity;}
 
 #act-intro{height:230vh;}
 .intro-inner{position:relative;z-index:4;text-align:center;padding:0 24px;will-change:transform,opacity;}
@@ -201,6 +202,7 @@ a{color:inherit;text-decoration:none;}
 </head>
 <body>
 <div class="cine-grain"></div>
+<div class="warp" id="warp"></div>
 <div class="progress" id="progress"></div>
 
 <nav class="nav" id="nav">
@@ -454,10 +456,11 @@ a{color:inherit;text-decoration:none;}
     return function(p){
       var zoom=easeOut(clamp(p/0.18,0,1));
       var ex=easeInOut(clamp((p-0.18)/0.44,0,1));
-      var exit=clamp((p-0.86)/0.14,0,1);
-      var baseScale=lerp(0.62,1,zoom)*lerp(1,1.35,exit);
-      prod.style.transform='scale('+baseScale+') translateY('+(exit*-12)+'vh)';
-      prod.style.opacity=1-exit;
+      var exit=easeInOut(clamp((p-0.82)/0.18,0,1));
+      var baseScale=lerp(0.18,1,zoom)*lerp(1,5.5,exit);
+      prod.style.transform='scale('+baseScale+') translateY('+(exit*-8)+'vh)';
+      prod.style.opacity=zoom*(1-clamp((exit-0.55)/0.45,0,1));
+      prod.style.filter='blur('+(exit*16)+'px)';
       var partsOn=clamp((p-0.16)/0.12,0,1);
       if(full) full.style.opacity=(1-partsOn);
       cfg.layout.forEach(function(L){
@@ -490,12 +493,20 @@ a{color:inherit;text-decoration:none;}
   var aIntro=document.getElementById('act-intro');
   var aBin=document.getElementById('bin');
   var aWash=document.getElementById('washer');
+  var warp=document.getElementById('warp');
   var sm={i:0,b:0,w:0};
+  function exitOf(p){ return easeInOut(clamp((p-0.82)/0.18,0,1)); }
   function frame(){
     var ti=actProgress(aIntro), tb=actProgress(aBin), tw=actProgress(aWash);
     var k=reduce?1:0.16;
     sm.i=lerp(sm.i,ti,k); sm.b=lerp(sm.b,tb,k); sm.w=lerp(sm.w,tw,k);
     renderIntro(sm.i); renderBin(sm.b); renderWash(sm.w);
+    if(warp){
+      var introExit=clamp((sm.i-0.55)/0.45,0,1);
+      var w=Math.max(introExit*0.5, exitOf(sm.b), exitOf(sm.w));
+      var flash=Math.max(0,(w-0.55)/0.45);
+      warp.style.opacity=flash*0.85;
+    }
     requestAnimationFrame(frame);
   }
   if(reduce){ renderIntro(0); renderBin(0.5); renderWash(0.5); }
