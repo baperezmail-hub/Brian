@@ -52,7 +52,10 @@ a{color:inherit;text-decoration:none;}
 @media(max-width:900px){.nav-links{display:none;}.nav-phone{display:none;}.nav{padding:14px 20px;}}
 
 .act{position:relative;}
-.stage{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.stage{position:fixed;top:0;left:0;width:100%;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;z-index:1;}
+#act-intro .stage{z-index:1;}
+#bin .stage{z-index:2;}
+#washer .stage{z-index:3;}
 .cine-bg{position:absolute;inset:0;z-index:0;background:radial-gradient(120% 90% at 50% 16%,#15294a 0%,#0a1628 42%,#050b16 100%);}
 .cine-glow{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5;pointer-events:none;}
 .glow-a{width:60vw;height:60vw;left:-15vw;top:-10vw;background:radial-gradient(circle,rgba(40,192,138,.32),transparent 70%);}
@@ -216,7 +219,7 @@ a{color:inherit;text-decoration:none;}
 <span id="top"></span>
 
 <section class="act" id="act-intro">
-  <div class="stage">
+  <div class="stage" id="stageIntro">
     <div class="cine-bg"></div><div class="cine-glow glow-a"></div><div class="cine-glow glow-b"></div>
     <video class="tex" id="tex-intro" autoplay muted loop playsinline poster="https://d8j0ntlcm91z4.cloudfront.net/user_3FTS0hHarPnxMz8dL8PvScfOfpA/hf_20260624_034542_d89514c5-b2fb-4ec4-9145-c8a5d6661206.png">
       <source src="https://d8j0ntlcm91z4.cloudfront.net/user_3FTS0hHarPnxMz8dL8PvScfOfpA/hf_20260624_194958_e21f54f8-6ca2-45a5-b23b-98f07120006a.mp4" type="video/mp4">
@@ -236,7 +239,7 @@ a{color:inherit;text-decoration:none;}
 </section>
 
 <section class="act dis" id="bin">
-  <div class="stage">
+  <div class="stage" id="stageBin">
     <div class="cine-bg"></div><div class="cine-glow glow-a"></div>
     <img class="tex" id="tex-bin" src="https://d8j0ntlcm91z4.cloudfront.net/user_3FTS0hHarPnxMz8dL8PvScfOfpA/hf_20260624_034543_1a23b5f5-298d-4056-928b-1ae5a1145cf4.png" alt="">
     <div class="dis-head" id="binHead"><p class="eyebrow">The Bin</p><h2 class="display">Every layer, <em>spotless.</em></h2></div>
@@ -253,7 +256,7 @@ a{color:inherit;text-decoration:none;}
 </section>
 
 <section class="act dis" id="washer">
-  <div class="stage">
+  <div class="stage" id="stageWash">
     <div class="cine-bg"></div><div class="cine-glow glow-b"></div>
     <img class="tex" id="tex-wash" src="https://d8j0ntlcm91z4.cloudfront.net/user_3FTS0hHarPnxMz8dL8PvScfOfpA/hf_20260624_034543_1a23b5f5-298d-4056-928b-1ae5a1145cf4.png" alt="">
     <div class="dis-head" id="washHead"><p class="eyebrow">The Equipment</p><h2 class="display">Professional <em>power.</em></h2></div>
@@ -491,15 +494,22 @@ a{color:inherit;text-decoration:none;}
   var aIntro=document.getElementById('act-intro');
   var aBin=document.getElementById('bin');
   var aWash=document.getElementById('washer');
+  var stageIntro=document.getElementById('stageIntro');
+  var stageBin=document.getElementById('stageBin');
+  var stageWash=document.getElementById('stageWash');
   var sm={i:0,b:0,w:0};
+  function setStage(el,op){ el.style.opacity=op; el.style.pointerEvents=op>0.4?'auto':'none'; }
   function frame(){
     var ti=actProgress(aIntro), tb=actProgress(aBin), tw=actProgress(aWash);
     var k=reduce?1:0.16;
     sm.i=lerp(sm.i,ti,k); sm.b=lerp(sm.b,tb,k); sm.w=lerp(sm.w,tw,k);
     renderIntro(sm.i); renderBin(sm.b); renderWash(sm.w);
+    setStage(stageIntro, 1-clamp((sm.i-0.84)/0.16,0,1));
+    setStage(stageBin, clamp(sm.b/0.1,0,1)*(1-clamp((sm.b-0.84)/0.16,0,1)));
+    setStage(stageWash, clamp(sm.w/0.1,0,1));
     requestAnimationFrame(frame);
   }
-  if(reduce){ renderIntro(0); renderBin(0.5); renderWash(0.5); }
+  if(reduce){ renderIntro(0); renderBin(0.5); renderWash(0.5); setStage(stageIntro,0); setStage(stageBin,0); setStage(stageWash,1); }
   requestAnimationFrame(frame);
 
   var nav=document.getElementById('nav'), bar=document.getElementById('progress');
