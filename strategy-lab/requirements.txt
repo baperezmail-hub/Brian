@@ -1,0 +1,18 @@
+# Core
+pandas>=2.0
+numpy>=1.24
+
+# Market data (optional but recommended)
+yfinance>=0.2.40        # free historical futures/equities data for backtests
+
+# Config / env
+python-dotenv>=1.0
+
+# Plotting backtest results (optional)
+matplotlib>=3.7
+
+# --- LIVE / PAPER TRADING (only needed when you go past backtesting) ---
+# Pick the ONE that matches your broker. Leave the rest uninstalled.
+# ib_insync>=0.9.86     # Interactive Brokers (real futures: ES, NQ, CL, GC...)
+# alpaca-py>=0.20       # Alpaca (stocks/crypto paper trading, no real futures)
+# ccxt>=4.0             # crypto exchanges / crypto perpetual futures
